@@ -1,0 +1,49 @@
+
+<div id="stream" class="clearfix">
+
+  <div id="form">
+    <form>
+      <label for="expr" title="The expression string">
+        Streaming Expression (expr)
+      </label>
+      <textarea name="expr" ng-model="expr" id="expr" title="The expression string.">search(....)</textarea>
+
+      <button type="submit" ng-click="doStream()">Execute</button>
+      <input type="checkbox" ng-model="doExplanation" name="doExplanation" id="doExplanation" value="true">
+      <label for="explain" class="checkbox" title="Enable Explanation." ng-click="doExplanation = !doExplanation">
+        with explanation
+      </label>
+
+    </form>
+  </div>
+
+  <div id="result">
+
+    <a ng-show="response.data" id="url" class="address-bar" ng-href="{{url}}">{{hostPortContext}}{{url}}</a>
+
+    <div ng-show="showExplanation" id="explanation" class="clearfix">
+      <div id="frame">
+        <div explanation-graph id="explanation-content" data="explanationData" depth="depth" leaf-count="leafCount" class="content clearfix" ng-show="showGraph">
+          <div id="legend">
+            <svg width="100%" height="15">
+              <g transform="translate(5,10)" class="stream-decorator"><circle r="4.5"></circle></g>
+              <g transform="translate(15,14)"><text>Stream Decorator</text></g>
+              <g transform="translate(140,10)" class="stream-source"><circle r="4.5"></circle></g>
+              <g transform="translate(150,14)"><text>Stream Source</text></g>
+              <g transform="translate(260,10)" class="graph-source"><circle r="4.5"></circle></g>
+              <g transform="translate(270,14)"><text>Graph Source</text></g>
+              <g transform="translate(375,10)" class="datastore"><circle r="4.5"></circle></g>
+              <g transform="translate(385,14)"><text>Datastore</text></g>
+            </svg>
+          </div>
+          <div id="canvas"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="response">
+      <pre class="syntax language-json"><code ng-bind-html="response.data | highlight:json | unsafe"></code></pre>
+    </div>
+  </div>
+
+</div>

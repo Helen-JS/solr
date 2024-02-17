@@ -1,0 +1,19 @@
+
+<div id="sqlquery" class="clearfix">
+  <div id="form">
+    <form>
+      <label for="sqlexpr" title="The SQL Query">
+        SQL Query Statement
+      </label>
+      <textarea name="stmt" ng-model="stmt" id="sqlexp"></textarea>
+      <button type="submit" ng-click="doQuery()">Execute</button>
+      <span><a href="https://solr.apache.org/guide/solr/latest/query-guide/sql-query.html" target="_out">syntax help</a></span>
+    </form>
+  </div>
+  <div id="sql-response">
+    <a ng-show="sqlData" id="url" class="address-bar" ng-href="{{url}}">{{hostPortContext}}{{url}}</a>
+    <div ng-show="sqlError"> {{sqlError}}</div>
+    <div ng-show="!sqlError" class="grid" ui-grid="gridOptions" id="sql-response"></div>
+
+  </div>
+</div>

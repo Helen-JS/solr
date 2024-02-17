@@ -1,0 +1,35 @@
+
+#content #files #tree-holder
+{
+  float: left;
+  width: 20%;
+}
+
+#content #files #tree-holder li
+{
+  overflow: hidden;
+}
+
+#content #files form .buttons button
+{
+  float: right;
+}
+
+#content #files #file-content
+{
+  float: right;
+  width: 78%;
+}
+
+#content #files .show #file-content
+{
+  display: block;
+}
+
+#content #files #file-content .response
+{
+  border: 1px solid transparent;
+  padding: 2px;
+  overflow: auto;
+  max-height: 600px;
+}

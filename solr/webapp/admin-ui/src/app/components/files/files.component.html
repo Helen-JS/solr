@@ -1,0 +1,31 @@
+<div id="files" class="clearfix">
+
+  <div id="frame">
+
+    <div id="tree-holder">
+
+      <jstree class="tree" on-select="showTreeLink(data)" data="tree" id="tree"></jstree>
+
+    </div>
+    <div id="file-content" class="clearfix">
+
+      <div class="top clearfix">
+
+        <a id="url" class="address-bar" href="{{url}}" ng-show="url">{{baseurl}}{{url}}</a>
+
+      </div>
+
+      <div class="view-file">
+
+        <div class="response" ng-show="content">
+          <pre class="syntax language-{{lang}}"><code ng-bind-html="content | highlight:lang | unsafe"></code></pre>
+        </div>
+
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
