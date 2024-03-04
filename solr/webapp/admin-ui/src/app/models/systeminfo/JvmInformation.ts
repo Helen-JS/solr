@@ -1,4 +1,4 @@
-/*!
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -16,3 +16,13 @@
  */
 
 
+interface JvmInformation{
+  version: string;
+  name: string;
+  spec: JvmSpecification;
+  jre: JreSpecification;
+  vm: VmSpecification;
+  processors: number;
+  memory: MemoryInformation;
+  jmx: JmxInformation;
+}
