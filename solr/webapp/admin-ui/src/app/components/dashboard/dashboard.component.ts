@@ -5,12 +5,13 @@ import {SizeUnitConverterPipe} from "../../pipes/sizeconverter/size-unit-convert
 import {DateConverter} from "../../utils/DateConverter";
 import {NgClass, NgIf} from "@angular/common";
 import {TimeAgoPipe} from "../../pipes/timeconverter/time-ago.pipe";
+import {SecurityDashboardComponent} from "../security-dashboard/security-dashboard.component";
 
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [SizeUnitConverterPipe, NgClass, TimeAgoPipe, NgIf],
+  imports: [SizeUnitConverterPipe, NgClass, TimeAgoPipe, NgIf, SecurityDashboardComponent],
   providers:[SystemInformationService],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
