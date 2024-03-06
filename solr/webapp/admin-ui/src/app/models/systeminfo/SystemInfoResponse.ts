@@ -16,12 +16,13 @@
  */
 
 
-
-interface SystemInfoResponse {
+export interface SystemInfoResponse {
   responseHeader: ResponseHeader
   mode: string;
   solrHome: string;
   coreRoot: string;
   lucene: LuceneInformation;
   jvm: JvmInformation;
+  security: Object;
+  system: OsInfo;
 }

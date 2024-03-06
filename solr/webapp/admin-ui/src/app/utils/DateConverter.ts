@@ -15,6 +15,16 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
+export class DateConverter {
+  private pattern: string = '/.* (?<date>\d{4}-\d{2}-\d{2}) .*/';
+  constructor() {
+  }
 
-export const routes: Routes = [];
+  public convertDateFromServerVersion(versionInfo: string): Date {
+    let found: RegExpMatchArray | null = versionInfo.match(this.pattern);
+
+
+    return (found && found.groups) ? new Date(found.groups['date']) : new Date();
+  }
+}
+

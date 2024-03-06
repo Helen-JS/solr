@@ -1,4 +1,4 @@
-/*
+/*!
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -15,6 +15,28 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+.exception
+{
+  background-color: #f00;
+  background-image: url( ../../../../../assets/img/ico/construction.png );
+  background-position: 10px 50%;
+  color: #fff;
+  font-weight: bold;
+  margin-bottom: 20px;
+  padding: 10px;
+  padding-left: 35px;
+}
+
+.exception .show-exception {
+  margin-top: 4px;
+  display: block;
+  position: absolute;
+  right: 10px;
+  top: 7px;
+  color: #fff;
+}
+
+#exception .show-exception a:hover {
+  color: #333;
+}

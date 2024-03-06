@@ -21,6 +21,6 @@ interface MemoryRawInformation {
   total: number;
   max: number;
   used: number;
-  usedP: number;
+  "used%": number;
 }
 
