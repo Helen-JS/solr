@@ -71,6 +71,7 @@ public class UsingSolrJRefGuideExamplesTest extends SolrCloudTestCase {
 
     CollectionAdminResponse response =
         CollectionAdminRequest.createCollection("techproducts", "conf", 1, 1)
+            .setPerReplicaState(SolrCloudTestCase.USE_PER_REPLICA_STATE)
             .process(cluster.getSolrClient());
     cluster.waitForActiveCollection("techproducts", 1, 1);
   }

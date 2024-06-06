@@ -1,0 +1,9 @@
+<div class="header-message" id="init-failures" ng-show="showInitFailures" ng-cloak>
+
+  <h2>SolrCore Initialization Failures</h2>
+  <ul>
+    <li ng-repeat="(core,error) in initFailures"><strong>{{core}}:</strong> {{error}}</li>
+  </ul>
+  <p>Please check your logs for more information</p>
+
+</div>

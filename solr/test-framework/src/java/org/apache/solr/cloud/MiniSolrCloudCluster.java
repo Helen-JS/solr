@@ -162,7 +162,6 @@ public class MiniSolrCloudCluster {
   private final Path baseDir;
   private CloudSolrClient solrClient;
   private final JettyConfig jettyConfig;
-  private final String solrXml;
   private final boolean trackJettyMetrics;
 
   private final AtomicInteger nodeIds = new AtomicInteger();
@@ -277,7 +276,6 @@ public class MiniSolrCloudCluster {
     Objects.requireNonNull(securityJson);
     this.baseDir = Objects.requireNonNull(baseDir);
     this.jettyConfig = Objects.requireNonNull(jettyConfig);
-    this.solrXml = solrXml == null ? DEFAULT_CLOUD_SOLR_XML : solrXml;
     this.trackJettyMetrics = trackJettyMetrics;
 
     log.info("Starting cluster of {} servers in {}", numServers, baseDir);
@@ -480,18 +478,18 @@ public class MiniSolrCloudCluster {
    *
    * @param name the instance name
    * @param config a JettyConfig for the instance's {@link org.apache.solr.embedded.JettySolrRunner}
-   * @param solrXml the string content of the solr.xml file to use, or null to just use the
-   *     cluster's default
+   * @param solrXml the string content of the solr.xml file to use, or null to just use default
    * @return a JettySolrRunner
    */
   public JettySolrRunner startJettySolrRunner(String name, JettyConfig config, String solrXml)
       throws Exception {
+    // tell solr node to look in zookeeper for solr.xml
     final Properties nodeProps = new Properties();
     nodeProps.setProperty("zkHost", zkServer.getZkAddress());
 
     Path runnerPath = createInstancePath(name);
     if (solrXml == null) {
-      solrXml = this.solrXml;
+      solrXml = DEFAULT_CLOUD_SOLR_XML;
     }
     Files.write(runnerPath.resolve("solr.xml"), solrXml.getBytes(StandardCharsets.UTF_8));
     JettyConfig newConfig = JettyConfig.builder(config).build();
@@ -1045,6 +1043,10 @@ public class MiniSolrCloudCluster {
       this.baseDir = baseDir;
 
       jettyConfigBuilder = JettyConfig.builder();
+      if (SolrTestCaseJ4.sslConfig != null) {
+        jettyConfigBuilder =
+            jettyConfigBuilder.withSSLConfig(SolrTestCaseJ4.sslConfig.buildServerSSLConfig());
+      }
     }
 
     /** Use a JettyConfig.Builder to configure the cluster's jetty servers */

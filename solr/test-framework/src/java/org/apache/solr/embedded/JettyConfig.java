@@ -20,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.servlet.Filter;
-import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.embedded.SSLConfig;
 import org.eclipse.jetty.servlet.ServletHolder;
 
@@ -85,8 +84,7 @@ public class JettyConfig {
     Long waitForLoadingCoresToFinishMs = 300000L;
     Map<ServletHolder, String> extraServlets = new TreeMap<>();
     Map<Class<? extends Filter>, String> extraFilters = new LinkedHashMap<>();
-    SSLConfig sslConfig =
-        SolrTestCaseJ4.sslConfig != null ? SolrTestCaseJ4.sslConfig.buildServerSSLConfig() : null;
+    SSLConfig sslConfig = null;
     int portRetryTime = 60;
 
     public Builder useOnlyHttp1(boolean useOnlyHttp1) {

@@ -1,0 +1,32 @@
+footer
+{
+  position: absolute;
+  bottom: -26px;
+  right: 0;
+}
+
+footer  li
+{
+  float: left;
+}
+
+footer li a
+{
+  background-position: 10px 50%;
+  display: block;
+  height: 25px;
+  line-height: 25px;
+  padding-left: 31px;
+  padding-right: 10px;
+}
+
+footer li a:hover
+{
+  background-color: #f0f0f0;
+}
+
+footer .documentation a { background-image: url( ../../../../assets/img/ico/document-text.png ); }
+footer .issues a { background-image: url( ../../../../assets/img/ico/bug.png ); }
+footer .chat a { background-image: url( ../../../../assets/img/ico/users.png ); }
+footer .community a { background-image: url( ../../../../assets/img/ico/mail.png ); }
+footer .query-syntax a { background-image: url( ../../../../assets/img/ico/script-code.png ); }

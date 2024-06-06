@@ -30,7 +30,7 @@ All of the examples in this section assume you are running the "techproducts" So
 
 [source,bash]
 ----
-bin/solr start -e techproducts
+bin/solr -e techproducts
 ----
 
 == Managed Resources Overview
