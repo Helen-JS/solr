@@ -16,6 +16,9 @@
  */
 package org.apache.solr.handler;
 
+import static org.apache.solr.common.params.CommonParams.FAILURE;
+import static org.apache.solr.common.params.CommonParams.STATUS;
+
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import org.apache.solr.client.solrj.SolrRequest.SolrRequestType;
@@ -31,7 +34,6 @@ import org.apache.solr.update.processor.UpdateRequestProcessor;
 import org.apache.solr.update.processor.UpdateRequestProcessorChain;
 import org.apache.solr.util.circuitbreaker.CircuitBreaker;
 import org.apache.solr.util.circuitbreaker.CircuitBreakerRegistry;
-import org.apache.solr.util.circuitbreaker.CircuitBreakerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +134,15 @@ public abstract class ContentStreamHandlerBase extends RequestHandlerBase {
     if (circuitBreakerRegistry.isEnabled(SolrRequestType.UPDATE)) {
       List<CircuitBreaker> trippedCircuitBreakers =
           circuitBreakerRegistry.checkTripped(SolrRequestType.UPDATE);
-      return CircuitBreakerUtils.reportErrorIfBreakersTripped(rsp, trippedCircuitBreakers);
+      if (trippedCircuitBreakers != null) {
+        String errorMessage = CircuitBreakerRegistry.toErrorMessage(trippedCircuitBreakers);
+        rsp.add(STATUS, FAILURE);
+        rsp.setException(
+            new SolrException(
+                CircuitBreaker.getExceptionErrorCode(),
+                "Circuit Breakers tripped " + errorMessage));
+        return true;
+      }
     }
     return false;
   }

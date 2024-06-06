@@ -23,6 +23,7 @@ import static org.hamcrest.core.Is.is;
 import java.util.Map;
 import org.apache.solr.SolrTestCase;
 import org.apache.solr.util.configuration.SSLCredentialProvider;
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
 /** */
@@ -43,7 +44,7 @@ public class EnvSSLCredentialProviderTest extends SolrTestCase {
     for (Map.Entry<SSLCredentialProvider.CredentialType, String> set :
         DEFAULT_CREDENTIAL_KEY_MAP.entrySet()) {
       String expectedpw = "pw" + ++cnt;
-      assertThat(sut.getCredential(set.getKey()), is(expectedpw));
+      MatcherAssert.assertThat(sut.getCredential(set.getKey()), is(expectedpw));
     }
   }
 

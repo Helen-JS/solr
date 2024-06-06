@@ -22,17 +22,17 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.Http2SolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient.HttpUriRequestResponse;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.CoreAdminRequest.WaitForState;
 import org.apache.solr.client.solrj.request.UpdateRequest;
@@ -124,7 +124,7 @@ public class RecoveryStrategy implements Runnable, Closeable {
   private int retries;
   private boolean recoveringAfterStartup;
   private CoreContainer cc;
-  private volatile FutureTask<NamedList<Object>> prevSendPreRecoveryHttpUriRequest;
+  private volatile HttpUriRequest prevSendPreRecoveryHttpUriRequest;
   private final Replica.Type replicaType;
 
   private CoreDescriptor coreDescriptor;
@@ -175,18 +175,25 @@ public class RecoveryStrategy implements Runnable, Closeable {
     this.recoveringAfterStartup = recoveringAfterStartup;
   }
 
-  private Http2SolrClient.Builder recoverySolrClientBuilder(String baseUrl, String leaderCoreName) {
+  /** Builds a new HttpSolrClient for use in recovery. Caller must close */
+  private HttpSolrClient.Builder recoverySolrClientBuilder(String baseUrl, String leaderCoreName) {
+    // workaround for SOLR-13605: get the configured timeouts & set them directly
+    // (even though getRecoveryOnlyHttpClient() already has them set)
     final UpdateShardHandlerConfig cfg = cc.getConfig().getUpdateShardHandlerConfig();
-    return new Http2SolrClient.Builder(baseUrl)
+    return (new HttpSolrClient.Builder(baseUrl)
         .withDefaultCollection(leaderCoreName)
-        .withHttpClient(cc.getUpdateShardHandler().getRecoveryOnlyHttpClient());
+        .withConnectionTimeout(cfg.getDistributedConnectionTimeout(), TimeUnit.MILLISECONDS)
+        .withSocketTimeout(cfg.getDistributedSocketTimeout(), TimeUnit.MILLISECONDS)
+        .withHttpClient(cc.getUpdateShardHandler().getRecoveryOnlyHttpClient()));
   }
 
   // make sure any threads stop retrying
   @Override
   public final void close() {
     close = true;
-    cancelPrepRecoveryCmd();
+    if (prevSendPreRecoveryHttpUriRequest != null) {
+      prevSendPreRecoveryHttpUriRequest.abort();
+    }
     log.warn("Stopping recovery for core=[{}] coreNodeName=[{}]", coreName, coreZkNodeName);
   }
 
@@ -329,14 +336,14 @@ public class RecoveryStrategy implements Runnable, Closeable {
     // we can lose our core descriptor, so store it now
     this.coreDescriptor = core.getCoreDescriptor();
 
-    if (this.coreDescriptor.getCloudDescriptor().getReplicaType().requireTransactionLog) {
+    if (this.coreDescriptor.getCloudDescriptor().requiresTransactionLog()) {
       doSyncOrReplicateRecovery(core);
     } else {
       doReplicateOnlyRecovery(core);
     }
   }
 
-  private void doReplicateOnlyRecovery(SolrCore core) {
+  private final void doReplicateOnlyRecovery(SolrCore core) throws InterruptedException {
     final RTimer timer = new RTimer();
     boolean successfulRecovery = false;
 
@@ -389,10 +396,8 @@ public class RecoveryStrategy implements Runnable, Closeable {
         log.info("Starting Replication Recovery.");
 
         try {
-          if (replicaType.replicateFromLeader) {
-            log.info("Stopping background replicate from leader process");
-            zkController.stopReplicationFromLeader(coreName);
-          }
+          log.info("Stopping background replicate from leader process");
+          zkController.stopReplicationFromLeader(coreName);
           replicate(zkController.getNodeName(), core, leaderprops);
 
           if (isClosed()) {
@@ -412,10 +417,8 @@ public class RecoveryStrategy implements Runnable, Closeable {
         log.error("Error while trying to recover. core={}", coreName, e);
       } finally {
         if (successfulRecovery) {
-          if (replicaType.replicateFromLeader) {
-            log.info("Restarting background replicate from leader process");
-            zkController.startReplicationFromLeader(coreName, false);
-          }
+          log.info("Restarting background replicate from leader process");
+          zkController.startReplicationFromLeader(coreName, false);
           log.info("Registering as Active after recovery.");
           try {
             zkController.publish(this.coreDescriptor, Replica.State.ACTIVE);
@@ -580,7 +583,7 @@ public class RecoveryStrategy implements Runnable, Closeable {
       }
     }
 
-    if (replicaType.replicateFromLeader) {
+    if (replicaType == Replica.Type.TLOG) {
       zkController.stopReplicationFromLeader(coreName);
     }
 
@@ -627,7 +630,11 @@ public class RecoveryStrategy implements Runnable, Closeable {
                 .getCollection(cloudDesc.getCollectionName())
                 .getSlice(cloudDesc.getShardId());
 
-        cancelPrepRecoveryCmd();
+        try {
+          prevSendPreRecoveryHttpUriRequest.abort();
+        } catch (NullPointerException e) {
+          // okay
+        }
 
         if (isClosed()) {
           log.info("RecoveryStrategy has been closed");
@@ -728,7 +735,7 @@ public class RecoveryStrategy implements Runnable, Closeable {
         if (successfulRecovery) {
           log.info("Registering as Active after recovery.");
           try {
-            if (replicaType.replicateFromLeader) {
+            if (replicaType == Replica.Type.TLOG) {
               zkController.startReplicationFromLeader(coreName, true);
             }
             zkController.publish(this.coreDescriptor, Replica.State.ACTIVE);
@@ -763,8 +770,8 @@ public class RecoveryStrategy implements Runnable, Closeable {
    * @param ourUrl if the leader url is the same as our url, we will skip trying to connect
    * @return the leader replica, or null if closed
    */
-  private Replica pingLeader(String ourUrl, CoreDescriptor coreDesc, boolean mayPutReplicaAsDown)
-      throws Exception {
+  private final Replica pingLeader(
+      String ourUrl, CoreDescriptor coreDesc, boolean mayPutReplicaAsDown) throws Exception {
     int numTried = 0;
     while (true) {
       CloudDescriptor cloudDesc = coreDesc.getCloudDescriptor();
@@ -883,6 +890,7 @@ public class RecoveryStrategy implements Runnable, Closeable {
 
   private final void sendPrepRecoveryCmd(String leaderBaseUrl, String leaderCoreName, Slice slice)
       throws SolrServerException, IOException, InterruptedException, ExecutionException {
+
     WaitForState prepCmd = new WaitForState();
     prepCmd.setCoreName(leaderCoreName);
     prepCmd.setNodeName(zkController.getNodeName());
@@ -903,19 +911,18 @@ public class RecoveryStrategy implements Runnable, Closeable {
     int readTimeout =
         conflictWaitMs
             + Integer.parseInt(System.getProperty("prepRecoveryReadTimeoutExtraWait", "8000"));
-    try (SolrClient client =
+    try (HttpSolrClient client =
         recoverySolrClientBuilder(
                 leaderBaseUrl,
                 null) // leader core omitted since client only used for 'admin' request
-            .withIdleTimeout(readTimeout, TimeUnit.MILLISECONDS)
+            .withSocketTimeout(readTimeout, TimeUnit.MILLISECONDS)
             .build()) {
-      prevSendPreRecoveryHttpUriRequest = new FutureTask<>(() -> client.request(prepCmd));
-      log.info("Sending prep recovery command to [{}]; [{}]", leaderBaseUrl, prepCmd);
-      prevSendPreRecoveryHttpUriRequest.run();
-    }
-  }
+      HttpUriRequestResponse mrr = client.httpUriRequest(prepCmd);
+      prevSendPreRecoveryHttpUriRequest = mrr.httpUriRequest;
 
-  private void cancelPrepRecoveryCmd() {
-    Optional.ofNullable(prevSendPreRecoveryHttpUriRequest).ifPresent(req -> req.cancel(true));
+      log.info("Sending prep recovery command to [{}]; [{}]", leaderBaseUrl, prepCmd);
+
+      mrr.future.get();
+    }
   }
 }

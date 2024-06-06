@@ -163,12 +163,8 @@ public class CoordinatorHttpSolrCall extends HttpSolrCall {
                 10,
                 TimeUnit.SECONDS,
                 docCollection -> {
-                  List<Replica> replicas =
-                      docCollection.getReplicas(solrCall.cores.getZkController().getNodeName());
-                  if (replicas == null || replicas.isEmpty()) {
-                    return false;
-                  }
-                  for (Replica nodeNameSyntheticReplica : replicas) {
+                  for (Replica nodeNameSyntheticReplica :
+                      docCollection.getReplicas(solrCall.cores.getZkController().getNodeName())) {
                     if (nodeNameSyntheticReplica.getState() == Replica.State.ACTIVE) {
                       return true;
                     }

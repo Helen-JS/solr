@@ -5,6 +5,7 @@ as to the usefulness of the tools.
 
 Description of dev-tools/ contents:
 
+./size-estimator-lucene-solr.xls -- Spreadsheet for estimating memory and disk usage in Lucene/Solr
 ./missing-doclet -- JavaDoc validation doclet subproject
 ./doap/       -- Lucene and Solr project descriptors in DOAP RDF format.
 ./scripts/    -- Odds and ends for building releases, etc.

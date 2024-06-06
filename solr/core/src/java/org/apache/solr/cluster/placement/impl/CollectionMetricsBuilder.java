@@ -16,7 +16,6 @@
  */
 package org.apache.solr.cluster.placement.impl;
 
-import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -25,13 +24,9 @@ import org.apache.solr.cluster.placement.CollectionMetrics;
 import org.apache.solr.cluster.placement.ReplicaMetric;
 import org.apache.solr.cluster.placement.ReplicaMetrics;
 import org.apache.solr.cluster.placement.ShardMetrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Builder class for constructing instances of {@link CollectionMetrics}. */
 public class CollectionMetricsBuilder {
-
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   final Map<String, ShardMetricsBuilder> shardMetricsBuilders = new HashMap<>();
 
@@ -83,13 +78,15 @@ public class CollectionMetricsBuilder {
             ReplicaMetrics metrics = replicaBuilder.build();
             metricsMap.put(name, metrics);
             if (replicaBuilder.leader) {
-              if (leaderMetricsBuilder != null
-                  && !leaderMetricsBuilder.replicaName.equals(replicaBuilder.replicaName)) {
-                log.warn(
-                    "Multiple replicas claim to be shard leader, selecting the latest candidate ({}) for metrics purposes",
-                    replicaBuilder.replicaName);
+              if (leaderMetricsBuilder == null) {
+                leaderMetricsBuilder = replicaBuilder;
+              } else if (!leaderMetricsBuilder.replicaName.equals(replicaBuilder.replicaName)) {
+                throw new RuntimeException(
+                    "two replicas claim to be the shard leader! existing="
+                        + leaderMetricsBuilder
+                        + " and current "
+                        + replicaBuilder);
               }
-              leaderMetricsBuilder = replicaBuilder;
             }
           });
       final ReplicaMetrics finalLeaderMetrics =

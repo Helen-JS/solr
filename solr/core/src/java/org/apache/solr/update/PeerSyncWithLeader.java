@@ -28,9 +28,11 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Set;
+import org.apache.http.client.HttpClient;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.ZkController;
@@ -54,9 +56,7 @@ public class PeerSyncWithLeader implements SolrMetricProducer {
 
   private UpdateHandler uhandler;
   private UpdateLog ulog;
-  private final SolrClient clientToLeader;
-  private final String coreName;
-  private final String leaderBaseUrl;
+  private SolrClient clientToLeader;
 
   private boolean doFingerprint;
 
@@ -79,10 +79,15 @@ public class PeerSyncWithLeader implements SolrMetricProducer {
     this.doFingerprint = !"true".equals(System.getProperty("solr.disableFingerprint"));
     this.uhandler = core.getUpdateHandler();
     this.ulog = uhandler.getUpdateLog();
+    HttpClient httpClient = core.getCoreContainer().getUpdateShardHandler().getDefaultHttpClient();
 
-    leaderBaseUrl = URLUtil.extractBaseUrl(leaderUrl);
-    coreName = URLUtil.extractCoreFromCoreUrl(leaderUrl);
-    clientToLeader = core.getCoreContainer().getUpdateShardHandler().getRecoveryOnlyHttpClient();
+    final var leaderBaseUrl = URLUtil.extractBaseUrl(leaderUrl);
+    final var coreName = URLUtil.extractCoreFromCoreUrl(leaderUrl);
+    this.clientToLeader =
+        new HttpSolrClient.Builder(leaderBaseUrl)
+            .withDefaultCollection(coreName)
+            .withHttpClient(httpClient)
+            .build();
 
     this.updater = new PeerSync.Updater(msg(), core);
 
@@ -195,6 +200,11 @@ public class PeerSyncWithLeader implements SolrMetricProducer {
     } finally {
       if (timerContext != null) {
         timerContext.close();
+      }
+      try {
+        clientToLeader.close();
+      } catch (IOException e) {
+        log.warn("{} unable to close client to leader", msg(), e);
       }
     }
   }
@@ -333,9 +343,7 @@ public class PeerSyncWithLeader implements SolrMetricProducer {
 
   private NamedList<Object> request(ModifiableSolrParams params, String onFail) {
     try {
-      QueryRequest request = new QueryRequest(params, SolrRequest.METHOD.POST);
-      request.setBasePath(leaderBaseUrl);
-      QueryResponse rsp = request.process(clientToLeader, coreName);
+      QueryResponse rsp = new QueryRequest(params, SolrRequest.METHOD.POST).process(clientToLeader);
       Exception exception = rsp.getException();
       if (exception != null) {
         throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, onFail);

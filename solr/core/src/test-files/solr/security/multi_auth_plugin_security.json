@@ -3,7 +3,6 @@
     "class": "solr.MultiAuthPlugin",
     "schemes": [{
       "scheme": "basic",
-      "realm": "basicRealm",
       "blockUnknown": true,
       "class": "solr.BasicAuthPlugin",
       "credentials": {
@@ -12,11 +11,6 @@
       "forwardCredentials": false
     },{
       "scheme": "mock",
-      "realm": "mockRealm",
-      "class": "org.apache.solr.security.MultiAuthPluginTest$MockAuthPluginForTesting",
-      "blockUnknown": true
-    },{
-      "scheme": "mockNoRealm",
       "class": "org.apache.solr.security.MultiAuthPluginTest$MockAuthPluginForTesting",
       "blockUnknown": true
     }]
