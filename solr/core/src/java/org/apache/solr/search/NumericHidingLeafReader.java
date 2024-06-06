@@ -76,8 +76,7 @@ public class NumericHidingLeafReader extends FilterLeafReader {
                 fi.getVectorDimension(),
                 fi.getVectorEncoding(),
                 fi.getVectorSimilarityFunction(),
-                fi.isSoftDeletesField(),
-                fi.isParentField()));
+                fi.isSoftDeletesField()));
       } else {
         filteredInfos.add(fi);
       }

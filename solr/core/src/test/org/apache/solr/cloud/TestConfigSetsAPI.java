@@ -106,6 +106,7 @@ import org.apache.solr.util.ExternalPaths;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assume;
@@ -1401,7 +1402,8 @@ public class TestConfigSetsAPI extends SolrCloudTestCase {
             });
     unIgnoreException("uploaded without any authentication in place");
 
-    assertThat(thrown.getMessage(), containsString("Underlying core creation failed"));
+    MatcherAssert.assertThat(
+        thrown.getMessage(), containsString("Underlying core creation failed"));
 
     // Authorization on
     final String trustedSuffix = "-trusted";
@@ -1436,7 +1438,8 @@ public class TestConfigSetsAPI extends SolrCloudTestCase {
             });
     unIgnoreException("without any authentication in place");
 
-    assertThat(thrown.getMessage(), containsString("Underlying core creation failed"));
+    MatcherAssert.assertThat(
+        thrown.getMessage(), containsString("Underlying core creation failed"));
 
     // Authorization on
     final String trustedSuffix = "-trusted";
@@ -1581,7 +1584,7 @@ public class TestConfigSetsAPI extends SolrCloudTestCase {
       final ByteBuffer fileBytes =
           TestSolrConfigHandler.getFileContent(file.getAbsolutePath(), false);
       final String uriEnding =
-          "/cluster/configs/"
+          "/api/cluster/configs/"
               + configSetName
               + suffix
               + (!overwrite ? "?overwrite=false" : "")
@@ -1590,7 +1593,8 @@ public class TestConfigSetsAPI extends SolrCloudTestCase {
       Map<?, ?> map =
           postDataAndGetResponse(
               cluster.getSolrClient(),
-              cluster.getJettySolrRunners().get(0).getBaseURLV2().toString() + uriEnding,
+              cluster.getJettySolrRunners().get(0).getBaseUrl().toString().replace("/solr", "")
+                  + uriEnding,
               fileBytes,
               username,
               usePut);
@@ -1633,7 +1637,7 @@ public class TestConfigSetsAPI extends SolrCloudTestCase {
       final ByteBuffer sampleConfigFile =
           TestSolrConfigHandler.getFileContent(file.getAbsolutePath(), false);
       final String uriEnding =
-          "/cluster/configs/"
+          "/api/cluster/configs/"
               + configSetName
               + suffix
               + "/"
@@ -1645,7 +1649,8 @@ public class TestConfigSetsAPI extends SolrCloudTestCase {
       Map<?, ?> map =
           postDataAndGetResponse(
               cluster.getSolrClient(),
-              cluster.getJettySolrRunners().get(0).getBaseURLV2().toString() + uriEnding,
+              cluster.getJettySolrRunners().get(0).getBaseUrl().toString().replace("/solr", "")
+                  + uriEnding,
               sampleConfigFile,
               username,
               usePut);

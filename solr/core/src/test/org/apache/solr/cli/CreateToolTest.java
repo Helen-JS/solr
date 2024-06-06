@@ -17,24 +17,52 @@
 
 package org.apache.solr.cli;
 
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static org.apache.solr.cli.SolrCLI.findTool;
 import static org.apache.solr.cli.SolrCLI.parseCmdLine;
+import static org.apache.solr.security.Sha256AuthenticationProvider.getSaltedHashedValue;
 
+import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.solr.cloud.SolrCloudTestCase;
-import org.apache.solr.util.SecurityJson;
+import org.apache.solr.common.util.Utils;
+import org.apache.solr.security.BasicAuthPlugin;
+import org.apache.solr.security.RuleBasedAuthorizationPlugin;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class CreateToolTest extends SolrCloudTestCase {
 
+  private static final String USER = "solr";
+  private static final String PASS = "SolrRocksAgain";
   private static final String collectionName = "testCreateCollectionWithBasicAuth";
 
   @BeforeClass
   public static void setupClusterWithSecurityEnabled() throws Exception {
+    final String SECURITY_JSON =
+        Utils.toJSONString(
+            Map.of(
+                "authorization",
+                Map.of(
+                    "class",
+                    RuleBasedAuthorizationPlugin.class.getName(),
+                    "user-role",
+                    singletonMap(USER, "admin"),
+                    "permissions",
+                    singletonList(Map.of("name", "all", "role", "admin"))),
+                "authentication",
+                Map.of(
+                    "class",
+                    BasicAuthPlugin.class.getName(),
+                    "blockUnknown",
+                    true,
+                    "credentials",
+                    singletonMap(USER, getSaltedHashedValue(PASS)))));
+
     configureCluster(2)
         .addConfig("conf", configset("cloud-minimal"))
-        .withSecurityJson(SecurityJson.SIMPLE)
+        .withSecurityJson(SECURITY_JSON)
         .configure();
   }
 
@@ -50,7 +78,7 @@ public class CreateToolTest extends SolrCloudTestCase {
       "-zkHost",
       cluster.getZkClient().getZkServerAddress(),
       "-credentials",
-      SecurityJson.USER_PASS,
+      USER + ":" + PASS,
       "-verbose"
     };
 

@@ -25,6 +25,7 @@ import org.apache.lucene.tests.util.TestRuleRestoreSystemProperties;
 import org.apache.solr.SolrTestCase;
 import org.apache.solr.util.configuration.SSLConfigurations;
 import org.apache.solr.util.configuration.SSLCredentialProvider;
+import org.hamcrest.MatcherAssert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -48,7 +49,7 @@ public class SysPropSSLCredentialProviderTest extends SolrTestCase {
         DEFAULT_CREDENTIAL_KEY_MAP.entrySet()) {
       String pw = "pw" + ++cnt;
       System.setProperty(set.getValue(), pw);
-      assertThat(sut.getCredential(set.getKey()), is(pw));
+      MatcherAssert.assertThat(sut.getCredential(set.getKey()), is(pw));
     }
   }
 

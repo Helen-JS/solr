@@ -24,9 +24,10 @@ import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.FilterLeafCollector;
 import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.solr.client.solrj.util.Cancellable;
 
 /** Allows a query to be cancelled */
-public class CancellableCollector implements Collector {
+public class CancellableCollector implements Collector, Cancellable {
 
   /** Thrown when a query gets cancelled */
   public static class QueryCancelledException extends RuntimeException {}
@@ -66,6 +67,7 @@ public class CancellableCollector implements Collector {
     return collector.scoreMode();
   }
 
+  @Override
   public void cancel() {
     isQueryCancelled.compareAndSet(false, true);
   }

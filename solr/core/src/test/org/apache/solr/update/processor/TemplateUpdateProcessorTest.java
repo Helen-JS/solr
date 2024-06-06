@@ -80,7 +80,9 @@ public class TemplateUpdateProcessorTest extends SolrCloudTestCase {
     NamedList<Object> result =
         cluster
             .getSolrClient()
-            .request(CollectionAdminRequest.createCollection("c", "conf1", 1, 1));
+            .request(
+                CollectionAdminRequest.createCollection("c", "conf1", 1, 1)
+                    .setPerReplicaState(SolrCloudTestCase.USE_PER_REPLICA_STATE));
     Utils.toJSONString(result.asMap(4));
     AbstractFullDistribZkTestBase.waitForCollection(cluster.getZkStateReader(), "c", 1);
     cluster.getSolrClient().request(add, "c");

@@ -168,8 +168,7 @@ public class SolrRequestParsers {
     ArrayList<ContentStream> streams = new ArrayList<>(1);
     SolrParams params = parser.parseParamsAndFillStreams(req, streams);
 
-    SolrQueryRequest sreq =
-        buildRequestFrom(core, params, streams, getRequestTimer(req), req, null);
+    SolrQueryRequest sreq = buildRequestFrom(core, params, streams, getRequestTimer(req), req);
 
     // Handlers and login will want to know the path. If it contains a ':'
     // the handler could use it for RESTful URLs
@@ -185,13 +184,7 @@ public class SolrRequestParsers {
   /** For embedded Solr use; not related to HTTP. */
   public SolrQueryRequest buildRequestFrom(
       SolrCore core, SolrParams params, Collection<ContentStream> streams) throws Exception {
-    return buildRequestFrom(core, params, streams, new RTimerTree(), null, null);
-  }
-
-  public SolrQueryRequest buildRequestFrom(
-      SolrCore core, SolrParams params, Collection<ContentStream> streams, Principal principal)
-      throws Exception {
-    return buildRequestFrom(core, params, streams, new RTimerTree(), null, principal);
+    return buildRequestFrom(core, params, streams, new RTimerTree(), null);
   }
 
   private SolrQueryRequest buildRequestFrom(
@@ -199,8 +192,7 @@ public class SolrRequestParsers {
       SolrParams params,
       Collection<ContentStream> streams,
       RTimerTree requestTimer,
-      final HttpServletRequest req,
-      final Principal principal)
+      final HttpServletRequest req)
       throws Exception {
     // The content type will be applied to all streaming content
     String contentType = params.get(CommonParams.STREAM_CONTENTTYPE);
@@ -260,11 +252,7 @@ public class SolrRequestParsers {
         new SolrQueryRequestBase(core, params, requestTimer) {
           @Override
           public Principal getUserPrincipal() {
-            if (principal != null) {
-              return principal;
-            } else {
-              return req == null ? null : req.getUserPrincipal();
-            }
+            return req == null ? null : req.getUserPrincipal();
           }
 
           @Override

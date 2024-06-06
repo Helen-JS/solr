@@ -26,6 +26,7 @@ import java.util.Arrays;
 import org.apache.lucene.tests.util.TestUtil;
 import org.apache.solr.SolrTestCase;
 import org.apache.solr.util.CryptoKeys;
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
 public class TestRSAKeyPair extends SolrTestCase {
@@ -50,7 +51,7 @@ public class TestRSAKeyPair extends SolrTestCase {
     final byte[] plaintext = plaintextString.getBytes(StandardCharsets.UTF_8);
 
     byte[] encrypted = kp.encrypt(ByteBuffer.wrap(plaintext));
-    assertThat(plaintext, not(equalTo(encrypted)));
+    MatcherAssert.assertThat(plaintext, not(equalTo(encrypted)));
 
     byte[] decrypted = CryptoKeys.decryptRSA(encrypted, kp.getPublicKey());
 

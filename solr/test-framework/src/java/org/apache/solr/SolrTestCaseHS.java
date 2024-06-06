@@ -503,7 +503,12 @@ public class SolrTestCaseHS extends SolrTestCaseJ4 {
       }
 
       if (jetty == null) {
-        JettyConfig jettyConfig = JettyConfig.builder().stopAtShutdown(true).setPort(port).build();
+        JettyConfig jettyConfig =
+            JettyConfig.builder()
+                .stopAtShutdown(true)
+                .setPort(port)
+                .withSSLConfig(sslConfig.buildServerSSLConfig())
+                .build();
         Properties nodeProperties = new Properties();
         nodeProperties.setProperty("solrconfig", solrconfigFile);
         nodeProperties.setProperty(CoreDescriptor.CORE_SCHEMA, schemaFile);

@@ -70,6 +70,10 @@ public class CloudDescriptor {
     }
   }
 
+  public boolean requiresTransactionLog() {
+    return this.replicaType != Replica.Type.PULL;
+  }
+
   public Replica.State getLastPublished() {
     return lastPublished;
   }

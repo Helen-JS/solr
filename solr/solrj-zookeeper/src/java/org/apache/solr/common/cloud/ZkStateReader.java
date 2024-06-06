@@ -119,7 +119,7 @@ public class ZkStateReader implements SolrCloseable {
 
   /**
    * This ZooKeeper file is no longer used starting with Solr 9 but keeping the name around to check
-   * if it is still present and non-empty (in case of upgrade from previous Solr version). It used
+   * if it is still present and non empty (in case of upgrade from previous Solr version). It used
    * to contain collection state for all collections in the cluster.
    */
   public static final String UNSUPPORTED_CLUSTER_STATE = "/clusterstate.json";
@@ -163,6 +163,7 @@ public class ZkStateReader implements SolrCloseable {
   private static final int GET_LEADER_RETRY_INTERVAL_MS = 50;
   private static final int GET_LEADER_RETRY_DEFAULT_TIMEOUT =
       Integer.parseInt(System.getProperty("zkReaderGetLeaderRetryTimeoutMs", "4000"));
+  ;
 
   public static final String LEADER_ELECT_ZKNODE = "leader_elect";
 
@@ -371,22 +372,6 @@ public class ZkStateReader implements SolrCloseable {
 
   private static class StatefulCollectionWatch extends CollectionWatch<DocCollectionWatcher> {
     private DocCollection currentState;
-
-    /**
-     * The {@link StateWatcher} that is associated with this {@link StatefulCollectionWatch}. It is
-     * necessary to track this because of the way {@link StateWatcher} instances expire
-     * asynchronously: once registered with ZooKeeper, a {@link StateWatcher} cannot be removed, and
-     * its {@link StateWatcher#process(WatchedEvent)} method will be invoked upon node update.
-     * Because it is not possible to synchronously remove the {@link StateWatcher} as part of a
-     * transaction with {@link ZkStateReader#collectionWatches}, we keep track of a unique {@link
-     * StateWatcher} here, so that all other {@link StateWatcher}s may properly expire in a deferred
-     * way.
-     */
-    private volatile StateWatcher associatedWatcher;
-
-    private StatefulCollectionWatch(StateWatcher associatedWatcher) {
-      this.associatedWatcher = associatedWatcher;
-    }
   }
 
   public static final Set<String> KNOWN_CLUSTER_PROPS =
@@ -666,10 +651,8 @@ public class ZkStateReader implements SolrCloseable {
 
   /** Refresh collections. */
   private void refreshCollections() {
-    for (Entry<String, StatefulCollectionWatch> e : collectionWatches.watchedCollectionEntries()) {
-      StateWatcher newStateWatcher = new StateWatcher(e.getKey());
-      e.getValue().associatedWatcher = newStateWatcher;
-      newStateWatcher.refreshAndWatch();
+    for (String coll : collectionWatches.watchedCollections()) {
+      new StateWatcher(coll).refreshAndWatch();
     }
   }
 
@@ -1330,24 +1313,10 @@ public class ZkStateReader implements SolrCloseable {
    * Returns the baseURL corresponding to a given node's nodeName -- NOTE: does not (currently)
    * imply that the nodeName (or resulting baseURL) exists in the cluster.
    *
-   * @param nodeName name of the node
-   * @return url that looks like {@code https://localhost:8983/solr}
+   * @lucene.experimental
    */
   public String getBaseUrlForNodeName(final String nodeName) {
-    String urlScheme = getClusterProperty(URL_SCHEME, "http");
-    return Utils.getBaseUrlForNodeName(nodeName, urlScheme, false);
-  }
-
-  /**
-   * Returns the V2 baseURL corresponding to a given node's nodeName -- NOTE: does not (currently)
-   * imply that the nodeName (or resulting baseURL) exists in the cluster.
-   *
-   * @param nodeName name of the node
-   * @return url that looks like {@code https://localhost:8983/api}
-   */
-  public String getBaseUrlV2ForNodeName(final String nodeName) {
-    String urlScheme = getClusterProperty(URL_SCHEME, "http");
-    return Utils.getBaseUrlForNodeName(nodeName, urlScheme, true);
+    return Utils.getBaseUrlForNodeName(nodeName, getClusterProperty(URL_SCHEME, "http"));
   }
 
   /** Watches a single collection's state.json. */
@@ -1367,9 +1336,8 @@ public class ZkStateReader implements SolrCloseable {
         return;
       }
 
-      StatefulCollectionWatch scw = collectionWatches.statefulWatchesByCollectionName.get(coll);
-      if (scw == null || scw.associatedWatcher != this) {
-        // Collection no longer interesting, or we have been replaced by a different watcher.
+      if (!collectionWatches.watchedCollections().contains(coll)) {
+        // This collection is no longer interesting, stop watching.
         log.debug("Uninteresting collection {}", coll);
         return;
       }
@@ -1711,21 +1679,19 @@ public class ZkStateReader implements SolrCloseable {
    * @see ZkStateReader#unregisterCore(String)
    */
   public void registerCore(String collection) {
-    AtomicReference<StateWatcher> newWatcherRef = new AtomicReference<>();
+    AtomicBoolean reconstructState = new AtomicBoolean(false);
     collectionWatches.compute(
         collection,
         (k, v) -> {
           if (v == null) {
-            StateWatcher stateWatcher = new StateWatcher(collection);
-            newWatcherRef.set(stateWatcher);
-            v = new StatefulCollectionWatch(stateWatcher);
+            reconstructState.set(true);
+            v = new StatefulCollectionWatch();
           }
           v.coreRefCount++;
           return v;
         });
-    StateWatcher newWatcher = newWatcherRef.get();
-    if (newWatcher != null) {
-      newWatcher.refreshAndWatch();
+    if (reconstructState.get()) {
+      new StateWatcher(collection).refreshAndWatch();
     }
   }
 
@@ -1797,29 +1763,26 @@ public class ZkStateReader implements SolrCloseable {
    * <p>The Watcher will automatically be removed when it's <code>onStateChanged</code> returns
    * <code>true</code>
    */
-  public void registerDocCollectionWatcher(
-      String collection, DocCollectionWatcher docCollectionWatcher) {
-    AtomicReference<StateWatcher> newWatcherRef = new AtomicReference<>();
+  public void registerDocCollectionWatcher(String collection, DocCollectionWatcher stateWatcher) {
+    AtomicBoolean watchSet = new AtomicBoolean(false);
     collectionWatches.compute(
         collection,
         (k, v) -> {
           if (v == null) {
-            StateWatcher stateWatcher = new StateWatcher(collection);
-            newWatcherRef.set(stateWatcher);
-            v = new StatefulCollectionWatch(stateWatcher);
+            v = new StatefulCollectionWatch();
+            watchSet.set(true);
           }
-          v.stateWatchers.add(docCollectionWatcher);
+          v.stateWatchers.add(stateWatcher);
           return v;
         });
 
-    StateWatcher newWatcher = newWatcherRef.get();
-    if (newWatcher != null) {
-      newWatcher.refreshAndWatch();
+    if (watchSet.get()) {
+      new StateWatcher(collection).refreshAndWatch();
     }
 
     DocCollection state = clusterState.getCollectionOrNull(collection);
-    if (docCollectionWatcher.onStateChanged(state) == true) {
-      removeDocCollectionWatcher(collection, docCollectionWatcher);
+    if (stateWatcher.onStateChanged(state) == true) {
+      removeDocCollectionWatcher(collection, stateWatcher);
     }
   }
 
@@ -2278,7 +2241,7 @@ public class ZkStateReader implements SolrCloseable {
     }
 
     /**
-     * Ensures the internal aliases is up-to-date. If there is a change, return true.
+     * Ensures the internal aliases is up to date. If there is a change, return true.
      *
      * @return true if an update was performed
      */
@@ -2286,7 +2249,7 @@ public class ZkStateReader implements SolrCloseable {
       if (log.isDebugEnabled()) {
         log.debug("Checking ZK for most up to date Aliases {}", ALIASES);
       }
-      // Call sync() first to ensure the subsequent read (getData) is up-to-date.
+      // Call sync() first to ensure the subsequent read (getData) is up to date.
       zkClient.getZooKeeper().sync(ALIASES, null, null);
       return setIfNewer(zkClient.getNode(ALIASES, null, true));
     }

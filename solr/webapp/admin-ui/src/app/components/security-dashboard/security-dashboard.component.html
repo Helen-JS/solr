@@ -1,0 +1,37 @@
+
+<h2>Security</h2>
+
+<div class="content" ng-show="isSecurityEnabled">
+
+  <ul class="data">
+
+    <li class="authentication_plugin"><dl class="clearfix">
+      <dt><span>Authentication Plugin</span></dt>
+      <dd>{{system.security["authenticationPlugin"]}}</dd>
+    </dl></li>
+
+    <li class="authorization_plugin"><dl class="clearfix">
+      <dt><span>Authorization Plugin</span></dt>
+      <dd>{{system.security["authorizationPlugin"]}}</dd>
+    </dl></li>
+
+    <li class="username"><dl class="clearfix">
+      <dt><span>Current Username</span></dt>
+      <dd>{{system.security["username"]}}</dd>
+    </dl></li>
+
+    <li class="user_roles"><dl class="clearfix">
+      <dt><span>User Roles</span></dt>
+      <dd>{{system.security["roles"]}}</dd>
+    </dl></li>
+
+  </ul>
+
+</div>
+
+<div ng-show="!isSecurityEnabled" style="text-align: left">
+  <p class="warning-msg"><img src="img/ico/shield--exclamation.png"/>&nbsp;WARNING: Security is not enabled for this server!</p>
+  <p>See <a href="/solr/#/~security">security screen</a> for how to enable authentication</p>
+  <p>TLS enabled? <img ng-show="tls" src="img/ico/tick.png"/><img ng-show="!tls" src="img/ico/cross.png"/></p>
+</div>
+

@@ -12,6 +12,8 @@ npm-debug.log
 yarn-error.log
 
 # IDEs and editors
+./idea/
+.idea
 .idea/
 .project
 .classpath
@@ -40,3 +42,7 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+#TODO: Don't forget to remove this gitigore directive when application would be replaced.
+../web/
+../web/*.*
+

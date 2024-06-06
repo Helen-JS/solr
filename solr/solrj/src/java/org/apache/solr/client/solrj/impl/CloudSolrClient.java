@@ -492,18 +492,14 @@ public abstract class CloudSolrClient extends SolrClient {
       nonRoutableRequest.setParams(nonRoutableParams);
       nonRoutableRequest.setBasicAuthCredentials(
           request.getBasicAuthUser(), request.getBasicAuthPassword());
-      final var endpoints =
-          routes.keySet().stream()
-              .map(url -> LBSolrClient.Endpoint.from(url))
-              .collect(Collectors.toList());
-      Collections.shuffle(endpoints, rand);
-      LBSolrClient.Req req = new LBSolrClient.Req(nonRoutableRequest, endpoints);
+      List<String> urlList = new ArrayList<>(routes.keySet());
+      Collections.shuffle(urlList, rand);
+      LBSolrClient.Req req = new LBSolrClient.Req(nonRoutableRequest, urlList);
       try {
         LBSolrClient.Rsp rsp = getLbClient().request(req);
-        shardResponses.add(endpoints.get(0).toString(), rsp.getResponse());
+        shardResponses.add(urlList.get(0), rsp.getResponse());
       } catch (Exception e) {
-        throw new SolrException(
-            SolrException.ErrorCode.SERVER_ERROR, endpoints.get(0).toString(), e);
+        throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, urlList.get(0), e);
       }
     }
 
@@ -1022,21 +1018,18 @@ public abstract class CloudSolrClient extends SolrClient {
     final String urlScheme = provider.getClusterProperty(ClusterState.URL_SCHEME, "http");
     final Set<String> liveNodes = provider.getLiveNodes();
 
-    final List<LBSolrClient.Endpoint> requestEndpoints =
-        new ArrayList<>(); // we populate this as follows...
+    final List<String> theUrlList = new ArrayList<>(); // we populate this as follows...
 
     if (request instanceof V2Request) {
       if (!liveNodes.isEmpty()) {
         List<String> liveNodesList = new ArrayList<>(liveNodes);
         Collections.shuffle(liveNodesList, rand);
-        final var chosenNodeUrl = Utils.getBaseUrlForNodeName(liveNodesList.get(0), urlScheme);
-        requestEndpoints.add(new LBSolrClient.Endpoint(chosenNodeUrl));
+        theUrlList.add(Utils.getBaseUrlForNodeName(liveNodesList.get(0), urlScheme));
       }
 
     } else if (ADMIN_PATHS.contains(request.getPath())) {
       for (String liveNode : liveNodes) {
-        final var nodeBaseUrl = Utils.getBaseUrlForNodeName(liveNode, urlScheme);
-        requestEndpoints.add(new LBSolrClient.Endpoint(nodeBaseUrl));
+        theUrlList.add(Utils.getBaseUrlForNodeName(liveNode, urlScheme));
       }
 
     } else { // Typical...
@@ -1051,13 +1044,13 @@ public abstract class CloudSolrClient extends SolrClient {
       List<String> preferredNodes = request.getPreferredNodes();
       if (preferredNodes != null && !preferredNodes.isEmpty()) {
         String joinedInputCollections = StrUtils.join(inputCollections, ',');
-        final var endpoints =
-            preferredNodes.stream()
-                .map(nodeName -> Utils.getBaseUrlForNodeName(nodeName, urlScheme))
-                .map(nodeUrl -> new LBSolrClient.Endpoint(nodeUrl, joinedInputCollections))
-                .collect(Collectors.toList());
-        if (!endpoints.isEmpty()) {
-          LBSolrClient.Req req = new LBSolrClient.Req(request, endpoints);
+        List<String> urlList = new ArrayList<>(preferredNodes.size());
+        for (String nodeName : preferredNodes) {
+          urlList.add(
+              Utils.getBaseUrlForNodeName(nodeName, urlScheme) + "/" + joinedInputCollections);
+        }
+        if (!urlList.isEmpty()) {
+          LBSolrClient.Req req = new LBSolrClient.Req(request, urlList);
           LBSolrClient.Rsp rsp = getLbClient().request(req);
           return rsp.getResponse();
         }
@@ -1117,16 +1110,15 @@ public abstract class CloudSolrClient extends SolrClient {
               if (inputCollections.size() == 1 && collectionNames.size() == 1) {
                 // If we have a single collection name (and not a alias to multiple collection),
                 // send the query directly to a replica of this collection.
-                requestEndpoints.add(
-                    new LBSolrClient.Endpoint(replica.getBaseUrl(), replica.getCoreName()));
+                theUrlList.add(replica.getCoreUrl());
               } else {
-                requestEndpoints.add(
-                    new LBSolrClient.Endpoint(replica.getBaseUrl(), joinedInputCollections));
+                theUrlList.add(
+                    ZkCoreNodeProps.getCoreUrl(replica.getBaseUrl(), joinedInputCollections));
               }
             }
           });
 
-      if (requestEndpoints.isEmpty()) {
+      if (theUrlList.isEmpty()) {
         collectionStateCache.keySet().removeAll(collectionNames);
         throw new SolrException(
             SolrException.ErrorCode.INVALID_STATE,
@@ -1134,7 +1126,7 @@ public abstract class CloudSolrClient extends SolrClient {
       }
     }
 
-    LBSolrClient.Req req = new LBSolrClient.Req(request, requestEndpoints);
+    LBSolrClient.Req req = new LBSolrClient.Req(request, theUrlList);
     LBSolrClient.Rsp rsp = getLbClient().request(req);
     return rsp.getResponse();
   }

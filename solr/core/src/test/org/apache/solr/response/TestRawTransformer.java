@@ -34,7 +34,6 @@ import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.ModifiableSolrParams;
-import org.apache.solr.embedded.JettyConfig;
 import org.apache.solr.embedded.JettySolrRunner;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -94,7 +93,7 @@ public class TestRawTransformer extends SolrCloudTestCase {
     nodeProperties.setProperty("solr.data.dir", h.getCore().getDataDir());
     JSR =
         new JettySolrRunner(
-            homeDir.toAbsolutePath().toString(), nodeProperties, JettyConfig.builder().build());
+            homeDir.toAbsolutePath().toString(), nodeProperties, buildJettyConfig());
   }
 
   private static void initCloud() throws Exception {
@@ -110,6 +109,7 @@ public class TestRawTransformer extends SolrCloudTestCase {
     collectionProperties.put("schema", "schema_latest.xml");
     CloudSolrClient cloudSolrClient = cloud.getSolrClient();
     CollectionAdminRequest.createCollection("collection1", configName, numNodes, 1)
+        .setPerReplicaState(SolrCloudTestCase.USE_PER_REPLICA_STATE)
         .setProperties(collectionProperties)
         .process(cloudSolrClient);
 

@@ -128,7 +128,7 @@ public class CloudSolrClientCacheTest extends SolrTestCaseJ4 {
               if (res instanceof Exception) throw (Throwable) res;
               LBSolrClient.Rsp rsp = new LBSolrClient.Rsp();
               rsp.rsp = (NamedList<Object>) res;
-              rsp.server = req.endpoints.get(0).toString();
+              rsp.server = req.servers.get(0);
               return rsp;
             });
     return mockLbclient;

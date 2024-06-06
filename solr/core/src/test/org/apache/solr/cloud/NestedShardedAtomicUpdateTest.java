@@ -35,12 +35,9 @@ import org.apache.solr.common.cloud.ClusterState;
 import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
-import org.apache.solr.util.RandomNoReverseMergePolicyFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 
 public class NestedShardedAtomicUpdateTest extends SolrCloudTestCase {
   private static final String DEBUG_LABEL = MethodHandles.lookup().lookupClass().getName();
@@ -48,9 +45,6 @@ public class NestedShardedAtomicUpdateTest extends SolrCloudTestCase {
 
   private static CloudSolrClient cloudClient;
   private static List<SolrClient> clients; // not CloudSolrClient
-
-  @ClassRule
-  public static final TestRule noReverseMerge = RandomNoReverseMergePolicyFactory.createRule();
 
   @BeforeClass
   public static void beforeClass() throws Exception {

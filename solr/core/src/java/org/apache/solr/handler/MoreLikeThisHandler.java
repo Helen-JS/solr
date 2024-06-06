@@ -61,7 +61,6 @@ import org.apache.solr.search.DocList;
 import org.apache.solr.search.DocListAndSet;
 import org.apache.solr.search.QParser;
 import org.apache.solr.search.QParserPlugin;
-import org.apache.solr.search.QueryLimits;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.QueryUtils;
 import org.apache.solr.search.ReturnFields;
@@ -266,8 +265,6 @@ public class MoreLikeThisHandler extends RequestHandlerBase {
       }
     } catch (ExitableDirectoryReader.ExitingReaderException ex) {
       log.warn("Query: {}; ", req.getParamString(), ex);
-      QueryLimits queryLimits = QueryLimits.getCurrentLimits();
-      queryLimits.maybeExitWithPartialResults("MoreLikeThis");
     }
   }
 

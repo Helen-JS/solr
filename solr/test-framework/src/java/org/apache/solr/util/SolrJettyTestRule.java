@@ -20,6 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.util.IOUtils;
@@ -69,7 +70,12 @@ public class SolrJettyTestRule extends SolrClientTestRule {
 
   @Override
   public void startSolr(Path solrHome) {
-    startSolr(solrHome, new Properties(), JettyConfig.builder().build());
+    startSolr(
+        solrHome,
+        new Properties(),
+        JettyConfig.builder()
+            .withSSLConfig(SolrTestCaseJ4.sslConfig.buildServerSSLConfig())
+            .build());
   }
 
   /**

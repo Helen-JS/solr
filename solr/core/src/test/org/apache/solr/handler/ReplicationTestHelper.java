@@ -103,8 +103,7 @@ public final class ReplicationTestHelper {
         if (null != port) {
           line = line.replace("TEST_PORT", port.toString());
         }
-        String externalCompression = LuceneTestCase.random().nextBoolean() ? "external" : "false";
-        line = line.replace("COMPRESSION", internalCompression ? "internal" : externalCompression);
+        line = line.replace("COMPRESSION", internalCompression ? "internal" : "false");
         out.write(line);
       }
     }
