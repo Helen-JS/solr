@@ -130,7 +130,7 @@ export class DashboardComponent {
   }
 
   isOldRelease(): boolean {
-    let appDateRelease  = this._coverter.convertDateFromServerVersion(this.solrImplementationVersion());
+    let appDateRelease = this._coverter.convertDateFromServerVersion(this.solrImplementationVersion());
    return Date.now() - appDateRelease.getTime() > 365
   }
 
