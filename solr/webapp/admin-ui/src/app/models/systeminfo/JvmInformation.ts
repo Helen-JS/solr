@@ -15,6 +15,14 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+interface JvmInformation{
+  version: string;
+  name: string;
+  spec: JvmSpecification;
+  jre: JreSpecification;
+  vm: VmSpecification;
+  processors: number;
+  memory: MemoryInformation;
+  jmx: JmxInformation;
+}

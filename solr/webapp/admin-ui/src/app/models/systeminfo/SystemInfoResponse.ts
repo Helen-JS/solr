@@ -15,6 +15,14 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+export interface SystemInfoResponse {
+  responseHeader: ResponseHeader
+  mode: string;
+  solrHome: string;
+  coreRoot: string;
+  lucene: LuceneInformation;
+  jvm: JvmInformation;
+  security: Object;
+  system: OsInfo;
+}

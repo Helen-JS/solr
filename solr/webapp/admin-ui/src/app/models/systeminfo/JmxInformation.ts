@@ -15,6 +15,11 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+interface JmxInformation {
+  classPath: string;
+  commandLineArgs: string[];
+  startTime: string;
+  upTimeMs: number;
+}
+

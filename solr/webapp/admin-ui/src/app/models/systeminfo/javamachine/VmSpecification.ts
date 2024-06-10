@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
-
-export const routes: Routes = [];
+interface VmSpecification {
+  vendor: string;
+  name: string;
+  version: string;
+}

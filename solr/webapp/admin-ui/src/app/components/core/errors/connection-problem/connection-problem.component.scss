@@ -1,0 +1,50 @@
+
+#connection-box
+{
+  display: none;
+}
+
+#connection-status-modal
+{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: #e6e6e6;
+  opacity: 0.5;
+  z-index: 100;
+}
+
+#connection-status-recovered
+{
+  z-index:102;
+}
+
+.connection-status
+{
+  position: absolute;
+  left: 200px;
+  right: 200px;
+  top: 40%;
+  height: 75px;
+  border: 1px solid #f00;
+  padding: 30px;
+  background-color: #fff;
+  opacity: 1;
+  z-index: 101;
+}
+
+.connection-status p
+{
+  background-image: url( ../../../../../assets/img/ico/network-status-busy.png );
+  background-position: 0 50%;
+  color: #800;
+  padding-left: 26px;
+}
+
+#connection-status-recovered p
+{
+  color: #080;
+  background-image: url( ../../../../../assets/img/ico/network-status.png );
+}

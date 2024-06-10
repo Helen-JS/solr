@@ -15,6 +15,11 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
+interface MemoryInformation {
+  free: string;
+  total: string;
+  max: string;
+  used: string;
+  raw: MemoryRawInformation;
+}
 
-export const routes: Routes = [];

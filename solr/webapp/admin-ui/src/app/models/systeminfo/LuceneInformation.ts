@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
-import { Routes } from '@angular/router';
-
-export const routes: Routes = [];
+interface LuceneInformation {
+  solrSpecVersion: string;
+  solrImplVersion: string;
+  luceneSpecVersion: string;
+  luceneImplVersion: string;
+}
