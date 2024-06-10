@@ -33,7 +33,6 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.TimeSource;
-import org.apache.solr.embedded.JettyConfig;
 import org.apache.solr.util.TimeOut;
 import org.junit.After;
 import org.junit.Before;
@@ -66,7 +65,7 @@ public class DaemonStreamApiTest extends SolrTestCaseJ4 {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    cluster = new MiniSolrCloudCluster(1, createTempDir(), JettyConfig.builder().build());
+    cluster = new MiniSolrCloudCluster(1, createTempDir(), buildJettyConfig());
 
     url = cluster.getJettySolrRunners().get(0).getBaseUrl().toString() + "/" + CHECKPOINT_COLL;
 

@@ -25,6 +25,7 @@ import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.cluster.placement.plugins.AffinityPlacementConfig;
 import org.apache.solr.cluster.placement.plugins.AffinityPlacementFactory;
 import org.apache.solr.core.CoreContainer;
+import org.hamcrest.MatcherAssert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -47,10 +48,10 @@ public class NodeConfigPlacementPluginTest extends SolrCloudTestCase {
   @Test
   public void testConfigurationInSolrXml() {
     CoreContainer cc = cluster.getJettySolrRunner(0).getCoreContainer();
-    assertThat(
+    MatcherAssert.assertThat(
         cc.getPlacementPluginFactory().createPluginInstance(),
         instanceOf(AffinityPlacementFactory.AffinityPlacementPlugin.class));
-    assertThat(
+    MatcherAssert.assertThat(
         cc.getPlacementPluginFactory().getConfig(), instanceOf(AffinityPlacementConfig.class));
 
     AffinityPlacementConfig config =

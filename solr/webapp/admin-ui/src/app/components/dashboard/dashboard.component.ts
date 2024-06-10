@@ -1,11 +1,11 @@
 import {Component, Inject} from '@angular/core';
-import {SystemInformationService} from "../../services/system.service";
 import {SystemInfoResponse} from "../../models/systeminfo/SystemInfoResponse"
 import {SizeUnitConverterPipe} from "../../pipes/sizeconverter/size-unit-converter-pipe.pipe";
 import {DateConverter} from "../../utils/DateConverter";
 import {NgClass, NgIf} from "@angular/common";
 import {TimeAgoPipe} from "../../pipes/timeconverter/time-ago.pipe";
 import {SecurityDashboardComponent} from "../security-dashboard/security-dashboard.component";
+import {SystemInformationService} from "../../services/system/system-information.service";
 
 
 @Component({
@@ -140,10 +140,6 @@ export class DashboardComponent {
   cmdArguments(): string[] {
     return this.info.jvm.jmx.commandLineArgs
   }
-
-  isOdd(id: number):boolean {
-    return (id & 1) !== 0
-  }
   javaMemoryTotal(): number {
     return this.info.jvm.memory.raw.total;
   }
@@ -165,4 +161,5 @@ export class DashboardComponent {
     return this.displayValueInPercents(this.javaMemoryTotal(), this.javaMemoryMax());
   }
 
+  protected readonly isOdd = isOdd;
 }

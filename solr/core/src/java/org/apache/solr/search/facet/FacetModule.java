@@ -303,7 +303,10 @@ public class FacetModule extends SearchComponent {
         if (Boolean.TRUE.equals(
             shardResponseHeader.getBooleanArg(
                 SolrQueryResponse.RESPONSE_HEADER_PARTIAL_RESULTS_KEY))) {
-          rb.rsp.setPartialResults();
+          rb.rsp
+              .getResponseHeader()
+              .asShallowMap()
+              .put(SolrQueryResponse.RESPONSE_HEADER_PARTIAL_RESULTS_KEY, Boolean.TRUE);
         }
         continue;
       }

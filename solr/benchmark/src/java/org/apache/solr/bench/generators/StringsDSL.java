@@ -58,7 +58,7 @@ public class StringsDSL {
         words.add(scanner.nextLine());
       }
     }
-    Collections.shuffle(words, new Random(BaseBenchState.RANDOM_SEED));
+    Collections.shuffle(words, new Random(BaseBenchState.getRandomSeed()));
     WORD_SIZE = words.size();
   }
 
@@ -108,17 +108,18 @@ public class StringsDSL {
   }
 
   /**
-   * Realistic unicode generator builder. No whitespace.
+   * Realistic unicode realistic unicode generator builder.
    *
    * @param minLength the min length
    * @param maxLength the max length
    * @return the realistic unicode generator builder
    */
   public RealisticUnicodeGeneratorBuilder realisticUnicode(int minLength, int maxLength) {
-    final var randomUnicodeGen =
-        new SolrGen<String>() {
+    return new RealisticUnicodeGeneratorBuilder(
+        new SolrGen<>() {
           @Override
           public String generate(SolrRandomnessSource in) {
+
             int block =
                 integers()
                     .between(0, blockStarts.length - 1)
@@ -130,19 +131,7 @@ public class StringsDSL {
                 .describedAs("Realistic Unicode")
                 .generate(in);
           }
-        }.assuming(
-            str -> {
-              // The string must not have whitespace
-              for (int i = 0; i < str.length(); i++) {
-                char c = str.charAt(i);
-                if (Character.isWhitespace(c)) {
-                  return false;
-                }
-              }
-              return true;
-            });
-    return new RealisticUnicodeGeneratorBuilder(
-        new SolrDescribingGenerator<>(randomUnicodeGen, Objects::toString));
+        });
   }
 
   /**

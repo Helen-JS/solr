@@ -20,6 +20,7 @@ import static org.apache.solr.common.params.CommonParams.NAME;
 
 import java.io.PrintStream;
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.CloudHttp2SolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.apache.solr.client.solrj.impl.JsonMapResponseParser;
@@ -109,7 +111,10 @@ public class DeleteTool extends ToolBase {
             .withOptionalBasicAuthCredentials(cli.getOptionValue(("credentials")));
 
     String zkHost = SolrCLI.getZkHost(cli);
-    try (CloudSolrClient cloudSolrClient = SolrCLI.getCloudHttp2SolrClient(zkHost, builder)) {
+    try (CloudSolrClient cloudSolrClient =
+        new CloudHttp2SolrClient.Builder(Collections.singletonList(zkHost), Optional.empty())
+            .withInternalClientBuilder(builder)
+            .build()) {
       echoIfVerbose("Connecting to ZooKeeper at " + zkHost, cli);
       cloudSolrClient.connect();
       deleteCollection(cloudSolrClient, cli);

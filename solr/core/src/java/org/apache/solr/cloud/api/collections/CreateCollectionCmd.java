@@ -76,7 +76,6 @@ import org.apache.solr.common.params.CollectionAdminParams;
 import org.apache.solr.common.params.CommonAdminParams;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
-import org.apache.solr.common.util.EnvUtils;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.common.util.Utils;
@@ -95,8 +94,6 @@ public class CreateCollectionCmd implements CollApiCmds.CollectionApiCommand {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final CollectionCommandContext ccc;
 
-  public static final String PRS_DEFAULT_PROP = "solr.prs.default";
-
   public CreateCollectionCmd(CollectionCommandContext ccc) {
     this.ccc = ccc;
   }
@@ -112,16 +109,7 @@ public class CreateCollectionCmd implements CollApiCmds.CollectionApiCommand {
     final boolean waitForFinalState = message.getBool(WAIT_FOR_FINAL_STATE, false);
     final String alias = message.getStr(ALIAS, collectionName);
     log.info("Create collection {}", collectionName);
-    boolean prsDefault = EnvUtils.getEnvAsBool(PRS_DEFAULT_PROP, false);
-    final boolean isPRS = message.getBool(CollectionStateProps.PER_REPLICA_STATE, prsDefault);
-    if (log.isInfoEnabled()) {
-      log.info(
-          "solr.prs.default : {} and collection prs : {}, isPRS : {}",
-          System.getProperty("solr.prs.default", null),
-          message.getStr(CollectionStateProps.PER_REPLICA_STATE),
-          isPRS);
-    }
-
+    final boolean isPRS = message.getBool(CollectionStateProps.PER_REPLICA_STATE, false);
     if (clusterState.hasCollection(collectionName)) {
       throw new SolrException(
           SolrException.ErrorCode.BAD_REQUEST, "collection already exists: " + collectionName);
@@ -515,7 +503,7 @@ public class CreateCollectionCmd implements CollApiCmds.CollectionApiCommand {
         Assign.getLiveOrLiveAndCreateNodeSetList(
             clusterState.getLiveNodes(),
             message,
-            CollectionHandlingUtils.RANDOM,
+            Utils.RANDOM,
             cloudManager.getDistribStateManager());
     if (nodeList.isEmpty()) {
       log.warn("It is unusual to create a collection ({}) without cores.", collectionName);

@@ -89,6 +89,7 @@ import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.QueryResult;
 import org.apache.solr.search.QueryUtils;
 import org.apache.solr.search.RankQuery;
+import org.apache.solr.search.ReRankQParserPlugin;
 import org.apache.solr.search.ReturnFields;
 import org.apache.solr.search.SolrIndexSearcher;
 import org.apache.solr.search.SolrReturnFields;
@@ -114,7 +115,6 @@ import org.apache.solr.search.grouping.endresulttransformer.EndResultTransformer
 import org.apache.solr.search.grouping.endresulttransformer.GroupedEndResultTransformer;
 import org.apache.solr.search.grouping.endresulttransformer.MainEndResultTransformer;
 import org.apache.solr.search.grouping.endresulttransformer.SimpleEndResultTransformer;
-import org.apache.solr.search.stats.LocalStatsCache;
 import org.apache.solr.search.stats.StatsCache;
 import org.apache.solr.util.SolrPluginUtils;
 import org.apache.solr.util.SolrResponseUtil;
@@ -146,18 +146,6 @@ public class QueryComponent extends SearchComponent {
         // Generate Query ID
         rb.queryID = generateQueryID(req);
       }
-      // set the flag for distributed stats
-      if (req.getSearcher().getStatsCache().getClass().equals(LocalStatsCache.class)) {
-        if (params.getPrimitiveBool(CommonParams.DISTRIB_STATS_CACHE)) {
-          throw new SolrException(
-              SolrException.ErrorCode.BAD_REQUEST,
-              "Explicitly set "
-                  + CommonParams.DISTRIB_STATS_CACHE
-                  + "=true is not supported with "
-                  + LocalStatsCache.class.getSimpleName());
-        }
-      }
-      rb.setDistribStatsDisabled(!params.getBool(CommonParams.DISTRIB_STATS_CACHE, true));
     }
 
     // Set field flags
@@ -371,16 +359,12 @@ public class QueryComponent extends SearchComponent {
       return;
     }
 
-    final boolean multiThreaded = params.getBool("multiThreaded", true);
-
     // -1 as flag if not set.
     long timeAllowed = params.getLong(CommonParams.TIME_ALLOWED, -1L);
 
     QueryCommand cmd = rb.createQueryCommand();
-    cmd.setMultiThreaded(multiThreaded);
     cmd.setTimeAllowed(timeAllowed);
     cmd.setMinExactCount(getMinExactCount(params));
-    cmd.setDistribStatsDisabled(rb.isDistribStatsDisabled());
 
     boolean isCancellableQuery = params.getBool(CommonParams.IS_QUERY_CANCELLABLE, false);
 
@@ -752,9 +736,8 @@ public class QueryComponent extends SearchComponent {
 
   protected void createDistributedStats(ResponseBuilder rb) {
     StatsCache cache = rb.req.getSearcher().getStatsCache();
-    if (!rb.isDistribStatsDisabled()
-        && ((rb.getFieldFlags() & SolrIndexSearcher.GET_SCORES) != 0
-            || rb.getSortSpec().includesScore())) {
+    if ((rb.getFieldFlags() & SolrIndexSearcher.GET_SCORES) != 0
+        || rb.getSortSpec().includesScore()) {
       ShardRequest sreq = cache.retrieveStatsRequest(rb);
       if (sreq != null) {
         rb.addRequest(this, sreq);
@@ -781,6 +764,7 @@ public class QueryComponent extends SearchComponent {
     boolean distribSinglePass = rb.req.getParams().getBool(ShardParams.DISTRIB_SINGLE_PASS, false);
 
     if (distribSinglePass
+        || singlePassExplain(rb.req.getParams())
         || (fields != null
             && fields.wantsField(keyFieldName)
             && fields.getRequestedFieldNames() != null
@@ -862,6 +846,36 @@ public class QueryComponent extends SearchComponent {
     rb.addRequest(this, sreq);
   }
 
+  private boolean singlePassExplain(SolrParams params) {
+
+    /*
+     * Currently there is only one explain that requires a single pass
+     * and that is the reRank when scaling is used.
+     */
+
+    String rankQuery = params.get(CommonParams.RQ);
+    if (rankQuery != null) {
+      if (rankQuery.contains(ReRankQParserPlugin.RERANK_MAIN_SCALE)
+          || rankQuery.contains(ReRankQParserPlugin.RERANK_SCALE)) {
+        boolean debugQuery = params.getBool(CommonParams.DEBUG_QUERY, false);
+        if (debugQuery) {
+          return true;
+        } else {
+          String[] debugParams = params.getParams(CommonParams.DEBUG);
+          if (debugParams != null) {
+            for (String debugParam : debugParams) {
+              if (debugParam.equals("true")) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
   protected boolean addFL(StringBuilder fl, String field, boolean additionalAdded) {
     if (additionalAdded) fl.append(",");
     fl.append(field);
@@ -917,7 +931,6 @@ public class QueryComponent extends SearchComponent {
     Float maxScore = null;
     boolean thereArePartialResults = false;
     Boolean segmentTerminatedEarly = null;
-    int failedShardCount = 0;
     for (ShardResponse srsp : sreq.responses) {
       SolrDocumentList docs = null;
       NamedList<?> responseHeader = null;
@@ -927,8 +940,8 @@ public class QueryComponent extends SearchComponent {
 
         if (srsp.getException() != null) {
           Throwable t = srsp.getException();
-          if (t instanceof SolrServerException && t.getCause() != null) {
-            t = t.getCause();
+          if (t instanceof SolrServerException) {
+            t = ((SolrServerException) t).getCause();
           }
           nl.add("error", t.toString());
           if (!rb.req.getCore().getCoreContainer().hideStackTrace()) {
@@ -936,7 +949,7 @@ public class QueryComponent extends SearchComponent {
             t.printStackTrace(new PrintWriter(trace));
             nl.add("trace", trace.toString());
           }
-          if (!StrUtils.isNullOrEmpty(srsp.getShardAddress())) {
+          if (srsp.getShardAddress() != null) {
             nl.add("shardAddress", srsp.getShardAddress());
           }
         } else {
@@ -966,13 +979,8 @@ public class QueryComponent extends SearchComponent {
         if (srsp.getSolrResponse() != null) {
           nl.add("time", srsp.getSolrResponse().getElapsedTime());
         }
-        // This ought to be better, but at least this ensures no duplicate keys in JSON result
-        String shard = srsp.getShard();
-        if (StrUtils.isNullOrEmpty(shard)) {
-          failedShardCount += 1;
-          shard = "unknown_shard_" + failedShardCount;
-        }
-        shardInfo.add(shard, nl);
+
+        shardInfo.add(srsp.getShard(), nl);
       }
       // now that we've added the shard info, let's only proceed if we have no error.
       if (srsp.getException() != null) {
@@ -1348,9 +1356,10 @@ public class QueryComponent extends SearchComponent {
           if (Boolean.TRUE.equals(
               responseHeader.getBooleanArg(
                   SolrQueryResponse.RESPONSE_HEADER_PARTIAL_RESULTS_KEY))) {
-            rb.rsp.setPartialResults();
-            rb.rsp.addPartialResponseDetail(
-                responseHeader.get(SolrQueryResponse.RESPONSE_HEADER_PARTIAL_RESULTS_DETAILS_KEY));
+            rb.rsp
+                .getResponseHeader()
+                .asShallowMap()
+                .put(SolrQueryResponse.RESPONSE_HEADER_PARTIAL_RESULTS_KEY, Boolean.TRUE);
           }
         }
         SolrDocumentList docs =

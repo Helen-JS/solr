@@ -17,7 +17,7 @@
 package org.apache.solr.handler.component;
 
 import java.io.IOException;
-import org.apache.solr.search.CancellableCollector;
+import org.apache.solr.client.solrj.util.Cancellable;
 
 /** Responsible for handling query cancellation requests */
 public class QueryCancellationComponent extends SearchComponent {
@@ -44,7 +44,7 @@ public class QueryCancellationComponent extends SearchComponent {
       throw new RuntimeException("Null query UUID seen");
     }
 
-    CancellableCollector cancellableTask =
+    Cancellable cancellableTask =
         rb.req.getCore().getCancellableQueryTracker().getCancellableTask(cancellationUUID);
 
     if (cancellableTask != null) {

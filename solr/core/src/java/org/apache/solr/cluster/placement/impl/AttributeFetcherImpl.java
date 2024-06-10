@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import org.apache.solr.client.solrj.cloud.NodeStateProvider;
 import org.apache.solr.client.solrj.cloud.SolrCloudManager;
 import org.apache.solr.client.solrj.impl.NodeValueFetcher;
 import org.apache.solr.cluster.Node;
@@ -139,14 +138,14 @@ public class AttributeFetcherImpl implements AttributeFetcher {
                               }));
         });
 
-    final NodeStateProvider nodeStateProvider = cloudManager.getNodeStateProvider();
-
     // Now that we know everything we need to fetch (and where to put it), just do it.
     // TODO: we could probably fetch this in parallel - for large clusters this could
     // significantly shorten the execution time
     for (Node node : nodes) {
       Map<String, Object> tagValues =
-          nodeStateProvider.getNodeValues(node.getName(), allSnitchTagsToInsertion.keySet());
+          cloudManager
+              .getNodeStateProvider()
+              .getNodeValues(node.getName(), allSnitchTagsToInsertion.keySet());
       for (Map.Entry<String, Object> e : tagValues.entrySet()) {
         String tag = e.getKey();
         Object value = e.getValue(); // returned value from the node
@@ -164,7 +163,7 @@ public class AttributeFetcherImpl implements AttributeFetcher {
     for (Node node : nodeToReplicaInternalTags.keySet()) {
       Set<String> tags = nodeToReplicaInternalTags.get(node);
       Map<String, Map<String, List<Replica>>> infos =
-          nodeStateProvider.getReplicaInfo(node.getName(), tags);
+          cloudManager.getNodeStateProvider().getReplicaInfo(node.getName(), tags);
       infos.entrySet().stream()
           .filter(entry -> requestedCollectionNamesMetrics.containsKey(entry.getKey()))
           .forEach(

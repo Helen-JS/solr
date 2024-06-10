@@ -159,10 +159,7 @@ public abstract class AbstractFullDistribZkTestBase extends AbstractDistribZkTes
     public JettySolrRunner jetty;
     public String nodeName;
     public String coreNodeName;
-
-    /** Core or Collection URL */
     public String url;
-
     public CloudSolrServerClient client;
     public ZkNodeProps info;
 
@@ -737,6 +734,7 @@ public abstract class AbstractFullDistribZkTestBase extends AbstractDistribZkTes
             .stopAtShutdown(false)
             .withServlets(getExtraServlets())
             .withFilters(getExtraRequestFilters())
+            .withSSLConfig(sslConfig.buildServerSSLConfig())
             .build();
 
     Properties props = new Properties();
@@ -781,6 +779,7 @@ public abstract class AbstractFullDistribZkTestBase extends AbstractDistribZkTes
             .stopAtShutdown(false)
             .withServlets(getExtraServlets())
             .withFilters(getExtraRequestFilters())
+            .withSSLConfig(sslConfig.buildServerSSLConfig())
             .build();
 
     Properties props = new Properties();
@@ -818,6 +817,7 @@ public abstract class AbstractFullDistribZkTestBase extends AbstractDistribZkTes
             .stopAtShutdown(false)
             .withServlets(getExtraServlets())
             .withFilters(getExtraRequestFilters())
+            .withSSLConfig(sslConfig.buildServerSSLConfig())
             .build();
 
     Properties props = new Properties();

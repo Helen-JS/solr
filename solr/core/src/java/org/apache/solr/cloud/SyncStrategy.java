@@ -24,9 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.http.client.HttpClient;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.Http2SolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest.RequestRecovery;
 import org.apache.solr.common.cloud.ZkCoreNodeProps;
 import org.apache.solr.common.cloud.ZkNodeProps;
@@ -54,7 +55,7 @@ public class SyncStrategy {
 
   private volatile boolean isClosed;
 
-  private final Http2SolrClient solrClient;
+  private final HttpClient client;
 
   private final ExecutorService updateExecutor;
 
@@ -68,7 +69,7 @@ public class SyncStrategy {
 
   public SyncStrategy(CoreContainer cc) {
     UpdateShardHandler updateShardHandler = cc.getUpdateShardHandler();
-    solrClient = updateShardHandler.getRecoveryOnlyHttpClient();
+    client = updateShardHandler.getDefaultHttpClient();
     shardHandler = cc.getShardHandlerFactory().getShardHandler();
     updateExecutor = updateShardHandler.getUpdateExecutor();
   }
@@ -360,11 +361,12 @@ public class SyncStrategy {
               RequestRecovery recoverRequestCmd = new RequestRecovery();
               recoverRequestCmd.setAction(CoreAdminAction.REQUESTRECOVERY);
               recoverRequestCmd.setCoreName(coreName);
+
               try (SolrClient client =
-                  new Http2SolrClient.Builder(baseUrl)
-                      .withHttpClient(solrClient)
+                  new HttpSolrClient.Builder(baseUrl)
+                      .withHttpClient(SyncStrategy.this.client)
                       .withConnectionTimeout(30000, TimeUnit.MILLISECONDS)
-                      .withIdleTimeout(120000, TimeUnit.MILLISECONDS)
+                      .withSocketTimeout(120000, TimeUnit.MILLISECONDS)
                       .build()) {
                 client.request(recoverRequestCmd);
               } catch (Throwable t) {

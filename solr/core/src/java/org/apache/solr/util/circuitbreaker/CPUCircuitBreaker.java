@@ -20,7 +20,6 @@ package org.apache.solr.util.circuitbreaker;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import java.lang.invoke.MethodHandles;
-import java.util.Locale;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.metrics.SolrMetricManager;
@@ -135,16 +134,6 @@ public class CPUCircuitBreaker extends CircuitBreaker implements SolrCoreAware {
   public void inform(SolrCore core) {
     this.cc = core.getCoreContainer();
     enableIfSupported();
-  }
-
-  @Override
-  public String toString() {
-    return String.format(
-        Locale.ROOT,
-        "%s(threshold=%f, warnOnly=%b)",
-        getClass().getSimpleName(),
-        cpuUsageThreshold,
-        isWarnOnly());
   }
 
   private void enableIfSupported() {

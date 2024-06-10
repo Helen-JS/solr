@@ -27,20 +27,15 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.BasicResultContext;
-import org.apache.solr.util.RandomNoReverseMergePolicyFactory;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 
 public class TestChildDocTransformer extends SolrTestCaseJ4 {
 
   private static String ID_FIELD = "id";
   private String[] titleVals = new String[2];
-
-  @ClassRule
-  public static final TestRule noReverseMerge = RandomNoReverseMergePolicyFactory.createRule();
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -143,7 +138,7 @@ public class TestChildDocTransformer extends SolrTestCaseJ4 {
                       "id, subject,[child parentFilter=\"subject:bleh\" childFilter=\"title:bar\" limit=2]"));
             });
     assertEquals(SolrException.ErrorCode.BAD_REQUEST.code, e.code());
-    assertThat(
+    MatcherAssert.assertThat(
         e.getMessage(),
         containsString(
             "Parent filter 'QueryBitSetProducer(subject:bleh)' doesn't match any parent documents"));
@@ -162,7 +157,7 @@ public class TestChildDocTransformer extends SolrTestCaseJ4 {
                       "id, subject,[child parentFilter=e childFilter=\"title:bar\" limit=2]"));
             });
     assertEquals(SolrException.ErrorCode.BAD_REQUEST.code, e.code());
-    assertThat(
+    MatcherAssert.assertThat(
         e.getMessage(),
         containsString(
             "Parent filter 'QueryBitSetProducer(text:e)' doesn't match any parent documents"));
@@ -181,7 +176,8 @@ public class TestChildDocTransformer extends SolrTestCaseJ4 {
                       "id, subject,[child parentFilter=\"\"]"));
             });
     assertEquals(SolrException.ErrorCode.BAD_REQUEST.code, e.code());
-    assertThat(e.getMessage(), containsString("Invalid Parent filter '', resolves to null"));
+    MatcherAssert.assertThat(
+        e.getMessage(), containsString("Invalid Parent filter '', resolves to null"));
   }
 
   private void testSubQueryXML() {

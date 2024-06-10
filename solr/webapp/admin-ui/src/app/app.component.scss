@@ -128,7 +128,7 @@
 #main.error .message
 {
   background-color: #f00;
-  background-image: url( ../../../../assets/img/ico/construction.png );
+  background-image: url(../assets/img/ico/construction.png );
   background-position: 10px 50%;
   color: #fff;
   font-weight: bold;
@@ -173,13 +173,13 @@
 
 #content .tree a .jstree-icon
 {
-  background-image: url( ../../../../assets/img/ico/folder.png );
+  background-image: url(../assets/img/ico/folder.png );
   background-position: unset;
 }
 
 #content .tree .jstree-leaf a .jstree-icon
 {
-  background-image: url( ../../../../assets/img/ico/document-text.png );
+  background-image: url(../assets/img/ico/document-text.png );
   background-position: unset;
 }
 
@@ -197,7 +197,7 @@
 {
   margin-bottom: 10px;
   margin-top: 10px;
-  background-image: url( ../../../../assets/img/ico/ui-address-bar.png );
+  background-image: url(../assets/img/ico/ui-address-bar.png );
   background-position: 5px 50%;
   border: 1px solid #f0f0f0;
   box-shadow: 1px 1px 0 #f0f0f0;

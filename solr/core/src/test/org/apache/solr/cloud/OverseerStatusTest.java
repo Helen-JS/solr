@@ -62,9 +62,7 @@ public class OverseerStatusTest extends SolrCloudTestCase {
         createcollection.get("requests"));
     // When cluster state updates are distributed, Overseer doesn't see them and doesn't report
     // stats on them.
-    // PRS collection creates do not go through overseer Queue
-    if (!cluster.getOpenOverseer().getDistributedClusterStateUpdater().isDistributedStateUpdate()
-        && !SolrCloudTestCase.isPRS()) {
+    if (!cluster.getOpenOverseer().getDistributedClusterStateUpdater().isDistributedStateUpdate()) {
       // Note the "create" key here is in a different map from the "create" key above. Above it's
       // from the
       // Collection creation in the Collection API, here it's the collection creation from the

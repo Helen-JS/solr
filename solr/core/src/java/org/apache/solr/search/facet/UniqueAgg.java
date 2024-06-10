@@ -16,9 +16,6 @@
  */
 package org.apache.solr.search.facet;
 
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.LongSet;
-import com.carrotsearch.hppc.cursors.LongCursor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +27,8 @@ import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.solr.common.util.CollectionUtil;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.schema.SchemaField;
+import org.apache.solr.util.LongIterator;
+import org.apache.solr.util.LongSet;
 
 public class UniqueAgg extends StrAggValueSource {
   public static final String UNIQUE = "unique";
@@ -147,7 +146,7 @@ public class UniqueAgg extends StrAggValueSource {
     protected void collectValues(int doc, int slot) throws IOException {
       LongSet set = sets[slot];
       if (set == null) {
-        set = sets[slot] = new LongHashSet(16);
+        set = sets[slot] = new LongSet(16);
       }
       collectValues(doc, set);
     }
@@ -173,7 +172,7 @@ public class UniqueAgg extends StrAggValueSource {
      */
     private int getCardinality(int slot) {
       LongSet set = sets[slot];
-      return set == null ? 0 : set.size();
+      return set == null ? 0 : set.cardinality();
     }
 
     public Object getShardValue(int slot) throws IOException {
@@ -189,8 +188,9 @@ public class UniqueAgg extends StrAggValueSource {
       if (unique <= maxExplicit) {
         List<Long> lst = new ArrayList<>(Math.min(unique, maxExplicit));
         if (set != null) {
-          for (LongCursor v : set) {
-            lst.add(v.value);
+          LongIterator iter = set.iterator();
+          while (iter.hasNext()) {
+            lst.add(iter.next());
           }
         }
         map.add(VALS, lst);

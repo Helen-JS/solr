@@ -25,6 +25,7 @@ import java.util.Set;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.solr.SolrTestCase;
 import org.apache.solr.ltr.interleaving.InterleavingResult;
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,15 +66,15 @@ public class TestTeamDraftInterleaving extends SolrTestCase {
     InterleavingResult interleaved = toTest.interleave(rerankedA, rerankedB);
     ScoreDoc[] interleavedResults = interleaved.getInterleavedResults();
 
-    assertThat(interleavedResults.length, is(5));
+    MatcherAssert.assertThat(interleavedResults.length, is(5));
 
-    assertThat(interleavedResults[0], is(a1));
-    assertThat(interleavedResults[1], is(b2));
+    MatcherAssert.assertThat(interleavedResults[0], is(a1));
+    MatcherAssert.assertThat(interleavedResults[1], is(b2));
 
-    assertThat(interleavedResults[2], is(b3));
-    assertThat(interleavedResults[3], is(a4));
+    MatcherAssert.assertThat(interleavedResults[2], is(b3));
+    MatcherAssert.assertThat(interleavedResults[3], is(a4));
 
-    assertThat(interleavedResults[4], is(b4));
+    MatcherAssert.assertThat(interleavedResults[4], is(b4));
   }
 
   /** Random Boolean Choices Generation from Seed: [0,1,1] */
@@ -87,8 +88,8 @@ public class TestTeamDraftInterleaving extends SolrTestCase {
     Set<Integer> modelAPicks = interleavingPicks.get(0);
     Set<Integer> modelBPicks = interleavingPicks.get(1);
 
-    assertThat(modelAPicks.size(), is(2));
-    assertThat(modelBPicks.size(), is(3));
+    MatcherAssert.assertThat(modelAPicks.size(), is(2));
+    MatcherAssert.assertThat(modelBPicks.size(), is(3));
 
     assertTrue(modelAPicks.contains(a1.doc));
     assertTrue(modelAPicks.contains(a4.doc));
@@ -122,15 +123,15 @@ public class TestTeamDraftInterleaving extends SolrTestCase {
     InterleavingResult interleaved = toTest.interleave(rerankedA, rerankedB);
     ScoreDoc[] interleavedResults = interleaved.getInterleavedResults();
 
-    assertThat(interleavedResults.length, is(5));
+    MatcherAssert.assertThat(interleavedResults.length, is(5));
 
-    assertThat(interleavedResults[0], is(a1));
-    assertThat(interleavedResults[1], is(b2));
+    MatcherAssert.assertThat(interleavedResults[0], is(a1));
+    MatcherAssert.assertThat(interleavedResults[1], is(b2));
 
-    assertThat(interleavedResults[2], is(b3));
-    assertThat(interleavedResults[3], is(a4));
+    MatcherAssert.assertThat(interleavedResults[2], is(b3));
+    MatcherAssert.assertThat(interleavedResults[3], is(a4));
 
-    assertThat(interleavedResults[4], is(b5));
+    MatcherAssert.assertThat(interleavedResults[4], is(b5));
   }
 
   /** Random Boolean Choices Generation from Seed: [0,1,1] */
@@ -144,8 +145,8 @@ public class TestTeamDraftInterleaving extends SolrTestCase {
     Set<Integer> modelAPicks = interleavingPicks.get(0);
     Set<Integer> modelBPicks = interleavingPicks.get(1);
 
-    assertThat(modelAPicks.size(), is(2));
-    assertThat(modelBPicks.size(), is(3));
+    MatcherAssert.assertThat(modelAPicks.size(), is(2));
+    MatcherAssert.assertThat(modelBPicks.size(), is(3));
 
     assertTrue(modelAPicks.contains(a1.doc));
     assertTrue(modelAPicks.contains(a4.doc));

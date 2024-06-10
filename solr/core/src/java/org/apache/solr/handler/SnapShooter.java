@@ -255,7 +255,7 @@ public class SnapShooter {
                 V2ApiUtils.squashIntoNamedListWithoutHeader(snapShootDetails, createSnapshot());
               } catch (Exception e) {
                 log.error("Exception while creating snapshot", e);
-                snapShootDetails = new SimpleOrderedMap<>();
+                snapShootDetails = new NamedList<>();
                 snapShootDetails.add("exception", e.getMessage());
               }
               if (snapshotName == null) {

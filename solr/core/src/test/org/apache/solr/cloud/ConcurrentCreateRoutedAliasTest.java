@@ -24,7 +24,6 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.common.util.IOUtils;
-import org.apache.solr.embedded.JettyConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +44,7 @@ public class ConcurrentCreateRoutedAliasTest extends SolrTestCaseJ4 {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    solrCluster = new MiniSolrCloudCluster(4, createTempDir(), JettyConfig.builder().build());
+    solrCluster = new MiniSolrCloudCluster(4, createTempDir(), buildJettyConfig());
   }
 
   @Override

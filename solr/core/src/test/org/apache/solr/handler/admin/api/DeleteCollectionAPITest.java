@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import java.util.Map;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.common.cloud.ZkNodeProps;
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
 /** Unit tests for {@link DeleteCollection} */
@@ -38,7 +39,7 @@ public class DeleteCollectionAPITest extends SolrTestCaseJ4 {
       final ZkNodeProps message = DeleteCollection.createRemoteMessage("someCollName", null, null);
       final Map<String, Object> rawMessage = message.getProperties();
       assertEquals(2, rawMessage.size());
-      assertThat(rawMessage.keySet(), containsInAnyOrder(QUEUE_OPERATION, NAME));
+      MatcherAssert.assertThat(rawMessage.keySet(), containsInAnyOrder(QUEUE_OPERATION, NAME));
       assertEquals("delete", rawMessage.get(QUEUE_OPERATION));
       assertEquals("someCollName", rawMessage.get(NAME));
     }
@@ -49,7 +50,7 @@ public class DeleteCollectionAPITest extends SolrTestCaseJ4 {
           DeleteCollection.createRemoteMessage("someCollName", Boolean.TRUE, "someAsyncId");
       final Map<String, Object> rawMessage = message.getProperties();
       assertEquals(4, rawMessage.size());
-      assertThat(
+      MatcherAssert.assertThat(
           rawMessage.keySet(), containsInAnyOrder(QUEUE_OPERATION, NAME, ASYNC, FOLLOW_ALIASES));
       assertEquals("delete", rawMessage.get(QUEUE_OPERATION));
       assertEquals("someCollName", rawMessage.get(NAME));

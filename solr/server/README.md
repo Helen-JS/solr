@@ -56,7 +56,8 @@ server/resources
 
 server/scripts/cloud-scripts
 
-  Command-line utility for working with snapshots using snapshotscli.sh
+  Command-line utility for working with ZooKeeper when running in SolrCloud mode, see zkcli.sh / .cmd for
+  usage information.
 
 server/solr
 
@@ -110,3 +111,4 @@ log just to a file. To configure logging, edit the log4j2.xml file in
 "resources".
  
 It is also possible to setup log4j or other popular logging frameworks.
+
