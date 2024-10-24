@@ -51,7 +51,12 @@
 
   <servlet-mapping>
     <servlet-name>LoadAdminUI</servlet-name>
-    <url-pattern>/index.html</url-pattern>
+    <url-pattern>currenntUi/index.html</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>LoadAdminUI</servlet-name>
+    <url-pattern>index.html</url-pattern>
   </servlet-mapping>
 
   <mime-mapping>
@@ -102,6 +107,6 @@
 
   <error-page>
     <error-code>404</error-code>
-    <location>/error404.html</location>
+    <location>currentUi/error404.html</location>
   </error-page>
 </web-app>
